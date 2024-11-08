@@ -27,7 +27,7 @@ For more information about the Meshfed API, please refer to the [Meshfed API Doc
 ```yaml
 - name: Setup meshStack bbrun
   id: setup-meshstack-auth
-  uses: meshcloud/actions-register-source@main
+  uses: meshcloud/actions-meshstack-auth@v0.0.1
   with:
     base_url: ${{ vars.BUILDINGBLOCK_API_BASE_URL }}
     client_id: ${{ vars.BUILDINGBLOCK_API_CLIENT_ID }}
