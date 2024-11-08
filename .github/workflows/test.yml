@@ -1,4 +1,8 @@
 name: Test Action
+on:
+  push:
+    branches:
+      - feature/*
 
 jobs:
   test:
