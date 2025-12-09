@@ -1,17 +1,26 @@
-# MeshStack Auth Action
+# meshStack Auth Action
 
-This action authenticates to meshStack API.
+This GitHub Action authenticates to the meshStack API to enable building block automation workflows.
 
-### Overview
+## Overview
 
-This GitHub Action is designed to authenticate against the Meshfed API. It helps you obtain an access token using client credentials, which can then be used to interact with the Meshfed API securely. This action simplifies the process of obtaining and managing authentication tokens for your workflows.
+This GitHub Action is designed to authenticate against the meshStack API. It helps you obtain an access token using client credentials, which can then be used to interact with the meshStack API securely. This action simplifies the process of obtaining and managing authentication tokens for your workflows.
 
-### API Documentation
+## Related Actions
 
-For more information about the Meshfed API, please refer to the [Meshfed API Documentation](https://docs.meshcloud.io/api/index.html).
+This action is part of a suite of GitHub Actions for meshStack building block automation:
 
+- **[actions-meshstack-auth](https://github.com/meshcloud/actions-meshstack-auth)** (this action) - Authenticates to the meshStack API
+- **[actions-register-source](https://github.com/meshcloud/actions-register-source)** - Registers building block sources and steps with meshStack
+- **[actions-send-status](https://github.com/meshcloud/actions-send-status)** - Sends building block step status updates to meshStack
 
-### Inputs
+## Documentation
+
+For more information about meshStack building blocks and GitHub Actions integration, refer to:
+- [meshStack GitHub Actions Integration](https://docs.meshcloud.io/integrations/github/github-actions/)
+- [meshStack API Documentation](https://docs.meshcloud.io/api/index.html)
+
+## Inputs
 
 - `base_url` (required): meshStack API endpoint.
 - `client_id` (required): The client ID for the API.
@@ -21,8 +30,7 @@ For more information about the Meshfed API, please refer to the [Meshfed API Doc
 
 - `token_file`: Path to the file containing the authentication token
 
-
-### Example Usage
+## Example Usage
 
 ```yaml
 - name: Setup meshStack bbrun
