@@ -43,6 +43,9 @@ async function run() {
 
       // Indicate successful login
       core.info('Login was successful.');
+      
+      // Output the token file path
+      core.setOutput('token_file', tokenFilePath);
 
       // Read token from the file
       const fileTokenData = JSON.parse(fs.readFileSync(tokenFilePath, 'utf8'));
