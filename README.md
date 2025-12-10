@@ -1,10 +1,10 @@
 # meshStack Auth Action
 
-This GitHub Action authenticates to the meshStack API to enable building block automation workflows.
+This GitHub Action authenticates to the meshStack API to enable building block automation workflows as well as other API interactions with meshStack.
 
 ## Overview
 
-This GitHub Action is designed to authenticate against the meshStack API. It helps you obtain an access token using client credentials, which can then be used to interact with the meshStack API securely. This action simplifies the process of obtaining and managing authentication tokens for your workflows.
+This action helps you obtain an access token using client credentials, which can then be used to interact with the meshStack API securely. This action simplifies the process of obtaining and managing authentication tokens for your workflows.
 
 ## Related Actions
 
@@ -26,18 +26,34 @@ For more information about meshStack building blocks and GitHub Actions integrat
 - `client_id` (required): The client ID for the API.
 - `key_secret` (required): The key secret for the API.
 
-### Outputs
+## Outputs
 
 - `token_file`: Path to the file containing the authentication token
 
 ## Example Usage
 
 ```yaml
-- name: Setup meshStack bbrun
-  id: setup-meshstack-auth
-  uses: meshcloud/actions-meshstack-auth@v0.0.1
-  with:
-    base_url: ${{ vars.BUILDINGBLOCK_API_BASE_URL }}
-    client_id: ${{ vars.BUILDINGBLOCK_API_CLIENT_ID }}
-    key_secret: ${{ secrets.BUILDINGBLOCK_API_KEY_SECRET }}
+name: Deploy Building Block
+
+on:
+  workflow_dispatch:
+    inputs:
+      buildingBlockRunUrl:
+        description: "URL to fetch the Building Block Run Object from"
+        required: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup meshStack auth
+        id: setup-meshstack-auth
+        uses: meshcloud/actions-meshstack-auth@v2
+        with:
+          base_url: ${{ vars.MESHSTACK_BASE_URL }}
+          client_id: ${{ vars.MESHSTACK_API_CLIENT_ID }}
+          key_secret: ${{ secrets.MESHSTACK_API_KEY_SECRET }}
 ```
