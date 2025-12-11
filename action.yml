@@ -1,8 +1,8 @@
-name: 'Setup Meshstack Authentication'
-description: 'Authenticates with Meshstack and sets up environment variables'
+name: 'Setup meshStack Authentication'
+description: 'Authenticates with meshStack and stores authentication token'
 inputs:
   base_url:
-    description: 'The URL of the Meshstack instance'
+    description: 'The URL of the meshStack instance'
     required: true
     type: string
   client_id:
@@ -17,7 +17,7 @@ outputs:
   token_file:
     description: 'Path to the file containing the authentication token'
 runs:
-  using: 'node20'
+  using: 'node24'
   main: 'dist/main/index.js'
   post: 'dist/cleanup/index.js'
 

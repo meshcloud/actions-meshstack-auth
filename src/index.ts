@@ -1,19 +1,34 @@
 import * as core from '@actions/core';
-import * as github from '@actions/github';
 import axios from 'axios';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 
-async function run() {
-  try {
-    const clientId = core.getInput('client_id');
-    const keySecret = core.getInput('key_secret');
-    const baseUrl = core.getInput('base_url');
+export interface AuthInputs {
+  client_id: string;
+  key_secret: string;
+  base_url: string;
+}
 
-    core.debug(`Client ID: ${clientId}`);
-    core.debug(`Key Secret: ${keySecret}`);
-    core.debug(`Base URL: ${baseUrl}`);
+// allows stubbing @actions/core in tests
+export interface CoreAdapter {
+  getInput: (name: string) => string;
+  setOutput: (name: string, value: any) => void;
+  setFailed: (message: string) => void;
+  debug: (message: string) => void;
+  info: (message: string) => void;
+  error: (message: string) => void;
+}
+
+export async function runAuth(coreAdapter: CoreAdapter = core) {
+  try {
+    const clientId = coreAdapter.getInput('client_id');
+    const keySecret = coreAdapter.getInput('key_secret');
+    const baseUrl = coreAdapter.getInput('base_url');
+
+    coreAdapter.debug(`Client ID: ${clientId}`);
+    coreAdapter.debug(`Key Secret: ${keySecret}`);
+    coreAdapter.debug(`Base URL: ${baseUrl}`);
 
     // Authenticate and get the token
     try {
@@ -29,7 +44,7 @@ async function run() {
       );
 
       const token = authResponse.data.access_token;
-      core.debug(`Token: ${token}`);
+      coreAdapter.debug(`Token: ${token}`);
 
       // Write token and other variables to a temporary file
       const tempDir = process.env.RUNNER_TEMP || os.tmpdir();
@@ -39,10 +54,13 @@ async function run() {
         baseUrl,
       };
       fs.writeFileSync(tokenFilePath, JSON.stringify(tokenData));
-      core.debug(`Token file path: ${tokenFilePath}`);
+      coreAdapter.debug(`Token file path: ${tokenFilePath}`);
 
       // Indicate successful login
-      core.info('Login was successful.');
+      coreAdapter.info('Login was successful.');
+      
+      // Output the token file path
+      coreAdapter.setOutput('token_file', tokenFilePath);
 
       // Read token from the file
       const fileTokenData = JSON.parse(fs.readFileSync(tokenFilePath, 'utf8'));
@@ -51,20 +69,28 @@ async function run() {
     } catch (authError) {
       if (axios.isAxiosError(authError)) {
         if (authError.response) {
-          core.error(`Authentication error response: ${JSON.stringify(authError.response.data)}`);
-          core.error(`Status code: ${authError.response.status}`);
+          coreAdapter.error(`Authentication error response: ${JSON.stringify(authError.response.data)}`);
+          coreAdapter.error(`Status code: ${authError.response.status}`);
         } else {
-          core.error(`Authentication error message: ${authError.message}`);
+          coreAdapter.error(`Authentication error message: ${authError.message}`);
         }
       } else {
-        core.error(`Unexpected error: ${authError}`);
+        coreAdapter.error(`Unexpected error: ${authError}`);
       }
       throw authError;
     }
   } catch (error) {
-    core.setFailed(`Action failed with error: ${error}`);
+    coreAdapter.setFailed(`Action failed with error: ${error}`);
+    throw error;
   }
 }
 
-run();
+async function run() {
+  await runAuth(core);
+}
+
+// Only run if this file is executed directly (not imported)
+if (require.main === module) {
+  run();
+}
 
