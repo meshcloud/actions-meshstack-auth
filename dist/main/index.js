@@ -29046,6 +29046,69 @@ module.exports = {
 
 /***/ }),
 
+/***/ 823:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.formatAxiosError = formatAxiosError;
+exports.logAxiosError = logAxiosError;
+exports.isAxiosError = isAxiosError;
+const axios_1 = __importDefault(__nccwpck_require__(8757));
+/**
+ * Formats an AxiosError into a concise, readable error message
+ * Includes: HTTP method, URL, status code, and response body (typically error message)
+ * Excludes verbose config details that cause thousands of lines of output
+ */
+function formatAxiosError(error) {
+    const parts = [];
+    if (error.config) {
+        if (error.config.method) {
+            parts.push(`Method: ${error.config.method.toUpperCase()}`);
+        }
+        if (error.config.url) {
+            parts.push(`URL: ${error.config.url}`);
+        }
+    }
+    if (error.response) {
+        parts.push(`Status: ${error.response.status}`);
+        if (error.response.data) {
+            const responseData = error.response.data;
+            if (typeof responseData === 'string') {
+                parts.push(`Response: ${responseData}`);
+            }
+            else if (typeof responseData === 'object') {
+                parts.push(`Response: ${JSON.stringify(responseData)}`);
+            }
+        }
+    }
+    else if (error.message) {
+        parts.push(`Error: ${error.message}`);
+    }
+    return parts.join(' | ');
+}
+/**
+ * Logs an AxiosError with concise formatting
+ * HTTP errors are considered "expected" and are treated as fully handled
+ */
+function logAxiosError(error, coreAdapter, context) {
+    const formattedError = formatAxiosError(error);
+    coreAdapter.error(`${context}: ${formattedError}`);
+}
+/**
+ * Determines if an error is an AxiosError
+ */
+function isAxiosError(error) {
+    return axios_1.default.isAxiosError(error);
+}
+
+
+/***/ }),
+
 /***/ 6144:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -29084,6 +29147,7 @@ const axios_1 = __importDefault(__nccwpck_require__(8757));
 const fs = __importStar(__nccwpck_require__(7147));
 const path = __importStar(__nccwpck_require__(1017));
 const os = __importStar(__nccwpck_require__(2037));
+const error_utils_1 = __nccwpck_require__(823);
 async function runAuth(coreAdapter = core) {
     try {
         const clientId = coreAdapter.getInput('client_id');
@@ -29120,14 +29184,8 @@ async function runAuth(coreAdapter = core) {
             const fileToken = fileTokenData.token;
         }
         catch (authError) {
-            if (axios_1.default.isAxiosError(authError)) {
-                if (authError.response) {
-                    coreAdapter.error(`Authentication error response: ${JSON.stringify(authError.response.data)}`);
-                    coreAdapter.error(`Status code: ${authError.response.status}`);
-                }
-                else {
-                    coreAdapter.error(`Authentication error message: ${authError.message}`);
-                }
+            if ((0, error_utils_1.isAxiosError)(authError)) {
+                (0, error_utils_1.logAxiosError)(authError, coreAdapter, 'Authentication error');
             }
             else {
                 coreAdapter.error(`Unexpected error: ${authError}`);
@@ -29136,12 +29194,25 @@ async function runAuth(coreAdapter = core) {
         }
     }
     catch (error) {
-        coreAdapter.setFailed(`Action failed with error: ${error}`);
+        // Exception handler of last resort
+        if (error instanceof Error) {
+            coreAdapter.setFailed(error.message);
+        }
+        else {
+            coreAdapter.setFailed(`An unknown error occurred: ${error}`);
+        }
         throw error;
     }
 }
 async function run() {
-    await runAuth(core);
+    try {
+        await runAuth(core);
+    }
+    catch (error) {
+        // Last-resort exception handler: prevent unhandled rejections
+        // The error has already been logged and setFailed has been called
+        process.exit(1);
+    }
 }
 // Only run if this file is executed directly (not imported)
 if (require.main === require.cache[eval('__filename')]) {

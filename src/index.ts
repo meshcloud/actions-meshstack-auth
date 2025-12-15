@@ -3,6 +3,7 @@ import axios from 'axios';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+import { logAxiosError, isAxiosError } from './error-utils';
 
 export interface AuthInputs {
   client_id: string;
@@ -67,26 +68,32 @@ export async function runAuth(coreAdapter: CoreAdapter = core) {
       const fileToken = fileTokenData.token;
 
     } catch (authError) {
-      if (axios.isAxiosError(authError)) {
-        if (authError.response) {
-          coreAdapter.error(`Authentication error response: ${JSON.stringify(authError.response.data)}`);
-          coreAdapter.error(`Status code: ${authError.response.status}`);
-        } else {
-          coreAdapter.error(`Authentication error message: ${authError.message}`);
-        }
+      if (isAxiosError(authError)) {
+        logAxiosError(authError, coreAdapter, 'Authentication error');
       } else {
         coreAdapter.error(`Unexpected error: ${authError}`);
       }
       throw authError;
     }
   } catch (error) {
-    coreAdapter.setFailed(`Action failed with error: ${error}`);
+    // Exception handler of last resort
+    if (error instanceof Error) {
+      coreAdapter.setFailed(error.message);
+    } else {
+      coreAdapter.setFailed(`An unknown error occurred: ${error}`);
+    }
     throw error;
   }
 }
 
 async function run() {
-  await runAuth(core);
+  try {
+    await runAuth(core);
+  } catch (error) {
+    // Last-resort exception handler: prevent unhandled rejections
+    // The error has already been logged and setFailed has been called
+    process.exit(1);
+  }
 }
 
 // Only run if this file is executed directly (not imported)
